@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+
+require 'redis'
+
+# Remove values older than 5 minutes
+threshold = Time.now-5*60
+
+# This is O(log(N)+M). See <http://redis.io/commands/zremrangebyscore>. Note
+# that this could be done in the middleware on each request, but it would
+# probably lead to scaling issues.
+removed = Redis.new.zremrangebyscore 'requests', "-inf", "(#{threshold.to_f}"
+
+puts "Removed #{removed} values"
+
+exit 0

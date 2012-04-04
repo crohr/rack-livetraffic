@@ -1,0 +1,51 @@
+#!/usr/bin/env ruby
+
+# This script will compute the requests stats over the last 5 minutes.
+require 'json'
+require 'uri'
+require 'redis'
+
+TRAFFIC_ID = ARGV[0]
+REDIS = Redis.new
+PERIOD = 5*60
+
+requests_count = 0
+end_time = Time.now
+start_time = end_time - PERIOD
+
+hostnames = {}
+slow_requests = []
+uniques = Set.new
+
+REDIS.zrangebyscore('requests', start_time.to_f, end_time.to_f, :with_scores => true).each_slice(2) do |(request, time)|
+  traffic_id, ip, uri, user_agent, duration, random = request.split(";")
+  duration = duration.to_f
+
+  next if TRAFFIC_ID && TRAFFIC_ID != traffic_id
+
+  requests_count += 1
+  scheme, user_info, host, port, registry, path, opaque, query, fragment = URI.split(uri)
+
+  hostnames[host] ||= {"total" => 0, "paths" => {}}
+  hostnames[host]["total"] += 1
+  hostnames[host]["paths"][path] ||= 0
+  hostnames[host]["paths"][path] += 1
+
+  uniques.add [ip, user_agent]
+
+  if slow_requests.length < 10
+    slow_requests.push({uri => duration})
+  elsif duration > slow_requests[-1].values[0]
+    slow_requests[-1] = {uri => duration}
+    # not the most optimized way to do it, but well...
+    slow_requests.sort!{|a,b| b.values.last <=> a.values.last}
+  end
+end
+
+puts JSON.pretty_generate({
+  "requests" => requests_count,
+  "rate" => (requests_count.to_f / PERIOD).round(1),
+  "uniq_visitor" => uniques.length,
+  "hostnames" => hostnames,
+  "slow_requests" => slow_requests
+})
