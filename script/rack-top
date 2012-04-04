@@ -37,7 +37,7 @@ REDIS.zrangebyscore('requests', start_time.to_f, end_time.to_f, :with_scores => 
     slow_requests.push({uri => duration})
   elsif duration > slow_requests[-1].values[0]
     slow_requests[-1] = {uri => duration}
-    # not the most optimized way to do it, but well...
+    # not the most optimized way to do it, but well, only ten values at most...
     slow_requests.sort!{|a,b| b.values.last <=> a.values.last}
   end
 end
