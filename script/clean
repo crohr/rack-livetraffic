@@ -7,7 +7,7 @@ threshold = Time.now-5*60
 
 # This is O(log(N)+M). See <http://redis.io/commands/zremrangebyscore>. Note
 # that this could be done in the middleware on each request, but it would
-# probably lead to scaling issues.
+# probably lead to additional delays in the request processing.
 removed = Redis.new.zremrangebyscore 'requests', "-inf", "(#{threshold.to_f}"
 
 puts "Removed #{removed} values"

@@ -14,8 +14,8 @@ by Dimelo.
 * Based on the requirements, requests need only to be stored for up to 5
   minutes. Redis is a good candidate because we can assign expiration dates to
   entries. However, we can't make range queries on single items (except with
-  the KEYS command, which is not recommended for production user). Therefore,
-  we'll store the values in a redis set (which allows range queries), and we
+  the KEYS command, which is not recommended for production use). Therefore,
+  we'll store the values in a Redis set (which allows range queries), and we
   will expire the old values with the `script/clean` script (see [this thread]
   [thread] for more explanation).
 
@@ -80,7 +80,7 @@ by Dimelo.
 
         $ bundle exec script/rack-top
 
-* To clean up old values from Redis, run:
+* From time to time, you may want to clean up old values from Redis:
 
         $ bundle exec script/clean
 
