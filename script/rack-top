@@ -18,7 +18,7 @@ slow_requests = []
 uniques = Set.new
 
 REDIS.zrangebyscore('requests', start_time.to_f, end_time.to_f, :with_scores => true).each_slice(2) do |(request, time)|
-  traffic_id, ip, uri, user_agent, duration, random = request.split(";")
+  traffic_id, uri, fingerprint, duration, random = request.split(";")
   duration = duration.to_f
 
   next if TRAFFIC_ID && TRAFFIC_ID != traffic_id
@@ -31,7 +31,7 @@ REDIS.zrangebyscore('requests', start_time.to_f, end_time.to_f, :with_scores => 
   hostnames[host]["paths"][path] ||= 0
   hostnames[host]["paths"][path] += 1
 
-  uniques.add [ip, user_agent]
+  uniques.add fingerprint
 
   if slow_requests.length < 10
     slow_requests.push({uri => duration})

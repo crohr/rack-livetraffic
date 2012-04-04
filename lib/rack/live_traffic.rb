@@ -1,15 +1,17 @@
 require 'redis'
 require 'uri'
-require 'digest/sha1'
+require 'digest/md5'
 require 'rack/request'
 
 module Rack
   class LiveTraffic
-    # Initialize the Rack middleware with an +app+.
-    # The +opts+ Hash can contain the following options:
+    # Initialize the Rack middleware with an +app+. The +opts+ Hash can
+    # contain the following options:
     #
-    # :traffic_key:: the environment variable that contains the silo ID (if any). Defaults to 'rack.livetraffic_id'.
-    # :set:: the name of the Redis set which will store the requests. Defaults to 'requests'.
+    # :traffic_key:: the environment variable that will contain the silo ID
+    #                (if any). Defaults to 'rack.livetraffic_id'.
+    # :set:: the name of the Redis set which will store the requests. Defaults
+    #        to 'requests'.
     # :redis:: the Redis URI. Defaults to 'redis://127.0.0.1:6379'
     def initialize(app, opts = {})
       @app = app
@@ -29,21 +31,23 @@ module Rack
       store(
         now,
         request.env[@traffic_key],
-        request.ip,
         request.url,
-        # Compute user-agent fingerprint
-        Digest::SHA1.hexdigest(request.user_agent),
+        # Compute visitor fingerprint
+        Digest::MD5.hexdigest([request.ip, request.user_agent].join),
         duration,
-        # Used to ensure that no other request will have the exact same values
-        rand(10000)
+        # Used to ensure that no other request will have the exact same values.
+        # Base36 is used to compress the values.
+        (now.to_f * 1_000_000).to_i.to_s(36),
+        rand(36**4).to_s(36)
       )
 
       result
     end
 
     # Store the request +values+ at +key+ in the Redis set. Will silently fail
-    # if the Redis connection is not available. Values are concatenated with a
-    # semi-colon between each value.
+    # if the Redis connection is not available, so that responses are still
+    # coming out. Values are concatenated with a semi-colon between each
+    # value.
     def store(key, *values)
       @redis.zadd @set, key.to_f, values.join(";")
     rescue Errno::ECONNREFUSED => e
