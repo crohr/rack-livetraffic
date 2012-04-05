@@ -67,14 +67,14 @@ by Dimelo.
 
 * Make some requests:
 
-        $ curl http://localhost:9292/hello
+        $ curl http://127.0.0.1:9292/hello
 
   Note that if you want to use the silo feature, you'll have to add an
-  additional middleware before `Rack::LiveTraffic`, which will set the
-  `rack.livetraffic_id` environment variable (you can also change the name of
-  that variable in the options of `Rack::LiveTraffic`, so that you can use
-  Apache or whatever to set an additional HTTP header, instead of a Rack
-  environment variable that only a middleware can set).
+  additional middleware before `Rack::LiveTraffic` (see example `config.ru`),
+  which will set the `rack.livetraffic_id` environment variable (you could
+  also change the name of that variable in the options of `Rack::LiveTraffic`,
+  so that you can use Apache or whatever to set an additional HTTP header,
+  instead of a Rack environment variable that only a middleware can set).
 
 * To fetch the stats, run:
 
